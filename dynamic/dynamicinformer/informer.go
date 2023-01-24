@@ -96,7 +96,11 @@ func (f *dynamicSharedInformerFactory) ForResource(gvr schema.GroupVersionResour
 		return informer
 	}
 
-	informer = NewFilteredDynamicInformer(f.client, gvr, f.namespace, f.defaultResync, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.EmitAllDeleteEvents, f.tweakListOptions)
+	if !f.EmitAllDeleteEvents {
+		informer = NewFilteredDynamicInformer(f.client, gvr, f.namespace, f.defaultResync, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+	} else {
+		informer = NewFilteredDynamicInformerWithAllDeleteEvents(f.client, gvr, f.namespace, f.defaultResync, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.EmitAllDeleteEvents, f.tweakListOptions)
+	}
 	f.informers[key] = informer
 
 	return informer
@@ -159,7 +163,36 @@ func (f *dynamicSharedInformerFactory) Shutdown() {
 }
 
 // NewFilteredDynamicInformer constructs a new informer for a dynamic type.
-func NewFilteredDynamicInformer(client dynamic.Interface, gvr schema.GroupVersionResource, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, emitAllDeleteEvents bool, tweakListOptions TweakListOptionsFunc) informers.GenericInformer {
+func NewFilteredDynamicInformer(client dynamic.Interface, gvr schema.GroupVersionResource, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions TweakListOptionsFunc) informers.GenericInformer {
+	return &dynamicInformer{
+		gvr: gvr,
+		informer: cache.NewSharedIndexInformerWithOptions(
+			&cache.ListWatch{
+				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+					if tweakListOptions != nil {
+						tweakListOptions(&options)
+					}
+					return client.Resource(gvr).Namespace(namespace).List(context.TODO(), options)
+				},
+				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+					if tweakListOptions != nil {
+						tweakListOptions(&options)
+					}
+					return client.Resource(gvr).Namespace(namespace).Watch(context.TODO(), options)
+				},
+			},
+			&unstructured.Unstructured{},
+			cache.SharedIndexInformerOptions{
+				ResyncPeriod:      resyncPeriod,
+				Indexers:          indexers,
+				ObjectDescription: gvr.String(),
+			},
+		),
+	}
+}
+
+// NewFilteredDynamicInformerWithAllDeleteEvents constructs a new informer for a dynamic type.
+func NewFilteredDynamicInformerWithAllDeleteEvents(client dynamic.Interface, gvr schema.GroupVersionResource, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, emitAllDeleteEvents bool, tweakListOptions TweakListOptionsFunc) informers.GenericInformer {
 	return &dynamicInformer{
 		gvr: gvr,
 		informer: cache.NewSharedIndexInformerWithOptions(
