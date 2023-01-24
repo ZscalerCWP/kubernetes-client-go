@@ -40,12 +40,13 @@ func NewDynamicSharedInformerFactory(client dynamic.Interface, defaultResync tim
 // NewDynamicSharedInformerFactoryWithAllDeleteEvents constructs a new instance of dynamicSharedInformerFactory with all delete events.
 func NewDynamicSharedInformerFactoryWithAllDeleteEvents(client dynamic.Interface, defaultResync time.Duration, namespace string, emitAllDeleteEvents bool, tweakListOptions TweakListOptionsFunc) DynamicSharedInformerFactory {
 	return &dynamicSharedInformerFactory{
-		client:           client,
-		defaultResync:    defaultResync,
-		namespace:        namespace,
-		informers:        map[schema.GroupVersionResource]informers.GenericInformer{},
-		startedInformers: make(map[schema.GroupVersionResource]bool),
-		tweakListOptions: tweakListOptions,
+		client:              client,
+		defaultResync:       defaultResync,
+		namespace:           namespace,
+		informers:           map[schema.GroupVersionResource]informers.GenericInformer{},
+		startedInformers:    make(map[schema.GroupVersionResource]bool),
+		EmitAllDeleteEvents: emitAllDeleteEvents,
+		tweakListOptions:    tweakListOptions,
 	}
 }
 
