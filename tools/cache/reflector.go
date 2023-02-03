@@ -581,15 +581,32 @@ loop:
 			resourceVersion := meta.GetResourceVersion()
 			switch event.Type {
 			case watch.Added:
-				err := store.Add(event.Object)
-				if err != nil {
-					utilruntime.HandleError(fmt.Errorf("%s: unable to add watch event object (%#v) to store: %v", name, event.Object, err))
+				if resource, ok := event.Object.(*unstructured.Unstructured); ok {
+					resource.SetManagedFields(nil)
+					err := store.Add(resource)
+					if err != nil {
+						utilruntime.HandleError(fmt.Errorf("%s: unable to update watch event object (%#v) to store: %v", name, event.Object, err))
+					}
+				} else {
+					err := store.Add(event.Object)
+					if err != nil {
+						utilruntime.HandleError(fmt.Errorf("%s: unable to add watch event object (%#v) to store: %v", name, event.Object, err))
+					}
 				}
 			case watch.Modified:
-				err := store.Update(event.Object)
-				if err != nil {
-					utilruntime.HandleError(fmt.Errorf("%s: unable to update watch event object (%#v) to store: %v", name, event.Object, err))
+				if resource, ok := event.Object.(*unstructured.Unstructured); ok {
+					resource.SetManagedFields(nil)
+					err := store.Update(resource)
+					if err != nil {
+						utilruntime.HandleError(fmt.Errorf("%s: unable to update watch event object (%#v) to store: %v", name, event.Object, err))
+					}
+				} else {
+					err := store.Update(event.Object)
+					if err != nil {
+						utilruntime.HandleError(fmt.Errorf("%s: unable to update watch event object (%#v) to store: %v", name, event.Object, err))
+					}
 				}
+
 			case watch.Deleted:
 				// TODO: Will any consumers need access to the "last known
 				// state", which is passed in event.Object? If so, may need
