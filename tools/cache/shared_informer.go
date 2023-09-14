@@ -469,6 +469,7 @@ func (s *sharedIndexInformer) Run(stopCh <-chan struct{}) {
 			KnownObjects:          s.indexer,
 			EmitDeltaTypeReplaced: true,
 			EmitAllDeleteEvents:   s.emitAllDeleteEvents,
+			Transformer:           s.transform,
 		})
 
 		cfg := &Config{
