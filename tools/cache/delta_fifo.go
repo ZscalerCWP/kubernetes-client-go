@@ -136,7 +136,7 @@ type DeltaFIFO struct {
 	// DeltaType when Replace() is called (to preserve backwards compat).
 	emitDeltaTypeReplaced bool
 	// UseDeleteWithNotification set to true forces watch handler to use deleteWithNotification method which sends all delete events to handler even though object is not present in cache.
-	EmitAllDeleteEvents bool
+	emitAllDeleteEvents bool
 
 	// Called with every object if non-nil.
 	transformer TransformFunc
@@ -259,7 +259,7 @@ func NewDeltaFIFOWithOptions(opts DeltaFIFOOptions) *DeltaFIFO {
 		knownObjects: opts.KnownObjects,
 
 		emitDeltaTypeReplaced: opts.EmitDeltaTypeReplaced,
-		EmitAllDeleteEvents:   opts.EmitAllDeleteEvents,
+		emitAllDeleteEvents:   opts.EmitAllDeleteEvents,
 		transformer:           opts.Transformer,
 	}
 	f.cond.L = &f.lock
@@ -341,7 +341,7 @@ func (f *DeltaFIFO) Delete(obj interface{}) error {
 	}
 	f.lock.Lock()
 	defer f.lock.Unlock()
-	if !f.EmitAllDeleteEvents {
+	if !f.emitAllDeleteEvents {
 		f.populated = true
 		if f.knownObjects == nil {
 			if _, exists := f.items[id]; !exists {

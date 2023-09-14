@@ -763,6 +763,7 @@ loop:
 				if err != nil {
 					utilruntime.HandleError(fmt.Errorf("%s: unable to delete watch event object (%#v) from store: %v", name, event.Object, err))
 				}
+
 			case watch.Bookmark:
 				// A `Bookmark` means watch has synced here, just update the resourceVersion
 				if _, ok := meta.GetAnnotations()["k8s.io/initial-events-end"]; ok {
