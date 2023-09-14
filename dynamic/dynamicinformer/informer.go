@@ -75,7 +75,8 @@ type dynamicSharedInformerFactory struct {
 	startedInformers map[schema.GroupVersionResource]bool
 	// EmitAllDeleteEvents set to true forces watch handler to use deleteWithNotification method which sends all delete events to handler even though object is not present in cache.
 	EmitAllDeleteEvents bool
-	tweakListOptions TweakListOptionsFunc
+
+  tweakListOptions TweakListOptionsFunc
 
 	// wg tracks how many goroutines were started.
 	wg sync.WaitGroup
