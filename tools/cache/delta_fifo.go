@@ -460,6 +460,11 @@ func (f *DeltaFIFO) queueActionLocked(actionType DeltaType, obj interface{}) err
 	if f.transformer != nil {
 		var err error
 		obj, err = f.transformer(obj)
+		// If a nullified object is returned then don't add it to the queue
+		// and instead discard the event from processing.
+		if obj == nil {
+			return nil
+		}
 		if err != nil {
 			return err
 		}
